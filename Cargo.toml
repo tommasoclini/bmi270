@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-device-driver = { version = "1.0.0-rc.1", features = ["yaml"] }
+device-driver = { version = "1.0.7", features = ["yaml"] }
 embedded-hal = "1.0"
 embedded-hal-async = "1.0"
-defmt = { version = "0.3", optional = true }
-heapless = "0.8"
+defmt = { version = "1.0.1", optional = true }
+heapless = "0.9.2"
 
 [features]
 defmt-03 = ["dep:defmt", "device-driver/defmt-03"]

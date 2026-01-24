@@ -8,11 +8,6 @@ pub struct DeviceInterface<SPI: SpiDevice> {
     spi: SPI,
 }
 
-device_driver::create_device!(
-    device_name: Device,
-    manifest: "src/ll/ll.yaml"
-);
-
 impl<SPI: SpiDevice> DeviceInterface<SPI> {
     /// Construct a new instance of the device.
     ///
@@ -74,12 +69,15 @@ impl<SPI: SpiDevice> device_driver::AsyncBufferInterface for DeviceInterface<SPI
         Ok(())
     }
 
-    #[allow(unused)]
     async fn read(
         &mut self,
         address: Self::AddressType,
         buf: &mut [u8],
     ) -> Result<usize, Self::Error> {
-        unimplemented!()
+        // Write address with read bit, and dummy byte to give the chip time to fetch the data
+        let preamble = [address | 0b1000_0000, 0x00];
+        let mut operations = [Operation::Write(&preamble), Operation::Read(buf)];
+        self.spi.transaction(&mut operations).await?;
+        Ok(buf.len())
     }
 }

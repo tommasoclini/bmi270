@@ -9,9 +9,9 @@ pub enum FifoDataFrame<'a> {
 
 #[derive(Debug)]
 pub struct RegularFrame<'a> {
-    aux: Option<&'a [u8]>,
-    gyr: Option<&'a Gyr>,
-    acc: Option<&'a Acc>,
+    pub aux: Option<&'a [u8]>,
+    pub gyr: Option<&'a Gyr>,
+    pub acc: Option<&'a Acc>,
 }
 
 impl<'a> RegularFrame<'a> {

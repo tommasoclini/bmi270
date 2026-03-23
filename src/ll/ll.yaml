@@ -148,6 +148,47 @@ gyr:
       start: 32
       end: 48
 
+sensor_time:
+  type: register
+  address: 0x18
+  access: RO
+  size_bits: 24
+  description: Sensor Time
+  fields:
+    sensor_time:
+      base: uint
+      start: 0
+      end: 24
+
+event:
+  type: register
+  address: 0x1B
+  access: RO
+  size_bits: 8
+  description: Sensor event flags. Will be cleared on read when bit 0 is sent out over the bus.
+  fields:
+    por_detected:
+      base: bool
+      start: 0
+    error_code:
+      base: uint
+      start: 2
+      end: 4
+      conversion:
+        name: ErrorCode
+        no_error:
+          value: 0x00
+          description: No error is reported
+        acc_err:
+          value: 0x01
+          description: Error in Register ACC_CONF
+        gyr_err:
+          value: 0x02
+          description: Error in Register GYR_CONF
+        acc_and_gyr_err:
+          value: 0x03
+          description: Error in Registers ACC_GYR & GYR_CONF
+
 int_status_0:
   type: register
   address: 0x1C
@@ -215,6 +256,77 @@ int_status_1:
       base: bool
       start: 7
       description: Accelerometer Data Ready Interrupt
+
+sc_out:
+  type: register
+  address: 0x1E
+  access: RO
+  size_bits: 16
+  description: Step counting value
+  fields:
+    step_count:
+      base: uint
+      start: 0
+      end: 16
+      description: Step counter output value
+
+wr_gest_act:
+  type: register
+  address: 0x20
+  access: RO
+  size_bits: 8
+  description: Wrist gesture and activity detection output
+  fields:
+    wr_gest_out:
+      base: uint
+      start: 0
+      end: 3
+      description: |
+        Output value of the wrist gesture detection
+        feature. Value after device initialization is 0b00
+        i.e. unknown gesture
+      try_conversion:
+        name: WristGesture
+        unknown_gesture:
+          value: 0x00
+          description: Unknown gesture
+        push_arm_down:
+          value: 0x01
+          description: Push arm down gesture
+        pivot_up:
+          value: 0x02
+          description: Pivot up gesture
+        wrist_shake_jiggle:
+          value: 0x03
+          description: Wrist shake/jiggle gesture
+        flick_in:
+          value: 0x04
+          description: Arm flick in gesture
+        flick_out:
+          value: 0x05
+          description: Arm flick out gesture
+    act_out:
+      base: uint
+      start: 3
+      end: 5
+      description: |
+        Output value of the activity detection feature.
+        Value after device initialization is 0b11 i.e.
+        unknown activity
+      conversion:
+        name: ActivityDetection
+        still:
+          value: 0x00
+          description: User stationary
+        walking:
+          value: 0x01
+          description: User walking
+        running:
+          value: 0x02
+          description: User running
+        unknown:
+          value: 0x03
+          description: Unknown state
 
 internal_status:
   type: register
@@ -285,18 +397,23 @@ temperature:
       start: 0
       end: 16
 
-feat_page:
+fifo_length:
   type: register
-  address: 0x2F
-  access: RW
-  size_bits: 8
-  description: Page number for feature configuration and output registers
+  address: 0x24
+  access: RO
+  size_bits: 14
   fields:
-    page:
+    fifo_length:
       base: uint
       start: 0
-      end: 3
-      description: Map 16 feature registers to one of the 8 feature pages
+      end: 14
+      description: Should be value 0x24
+
+fifo_data:
+  type: buffer
+  address: 0x26
+  access: RW
+  description: FIFO_DATA register
 
 any_motion1:
   type: register
@@ -468,6 +585,261 @@ acc_range:
           value: 0x03
           description: +/-16g
 
+gyr_conf:
+  type: register
+  address: 0x42
+  access: RW
+  size_bits: 8
+  reset_value: 0xA9
+  description: Sets the output data rate and the bandwidth of the Gyroscope
+  fields:
+    gyr_odr:
+      base: uint
+      start: 0
+      end: 4
+      description: ODR in Hz
+      try_conversion:
+        name: gyr_odr
+        odr_25:
+          value: 0x06
+          description: 25Hz
+        odr_50:
+          value: 0x07
+          description: 50Hz
+        odr_100:
+          value: 0x08
+          description: 100Hz
+          default:
+        odr_200:
+          value: 0x09
+          description: 200Hz
+        odr_400:
+          value: 0x0A
+          description: 400Hz
+        odr_800:
+          value: 0x0B
+          description: 800Hz
+        odr_1k6:
+          value: 0x0C
+          description: 1600Hz
+        odr_3k2:
+          value: 0x0D
+          description: 3200Hz
+    gyr_bwp:
+      base: uint
+      start: 4
+      end: 6
+      description: Gyroscope bandwidth coefficient
+      conversion:
+        name: gyr_bwp
+        osr4:
+          value: 0x00
+          description: OSR4 mode
+        osr2:
+          value: 0x01
+          description: OSR2 mode
+        norm:
+          value: 0x02
+          description: Normal mode
+        res:
+          value: 0x03
+          description: Reserved
+    gyr_noise_perf:
+      base: uint
+      start: 6
+      end: 7
+      description: Select noise performance
+      conversion:
+        name: gyr_noise_perf
+        ulp:
+          value: 0x00
+          description: Power optimized
+        hp:
+          value: 0x01
+          description: Performance optimized
+    gyr_filter_perf:
+      base: uint
+      start: 7
+      end: 8
+      description: Select gyroscope filter performance mode
+      conversion:
+        name: gyr_filter_perf
+        ulp:
+          value: 0x00
+          description: Power optimized
+        hp:
+          value: 0x01
+          description: Performance optimized
+
+gyr_range:
+  type: register
+  address: 0x43
+  access: RW
+  size_bits: 8
+  description: Defines the Gyroscope angular rate measurement range
+  fields:
+    gyr_range:
+      base: uint
+      start: 0
+      end: 3
+      description: Full scale for filtered FIFO data and DATA registers
+      try_conversion:
+        name: gyr_range
+        range_2000:
+          value: 0x00
+          description: +/-2000dps, 16.4 LSB/dps
+        range_1000:
+          value: 0x01
+          description: +/-1000dps, 32.8 LSB/dps
+        range_500:
+          value: 0x02
+          description: +/-500dps, 65.6 LSB/dps
+        range_250:
+          value: 0x03
+          description: +/-250dps, 131.2 LSB/dps
+        range_125:
+          value: 0x04
+          description: +/-125dps, 262.4 LSB/dps
+    ois_range:
+      base: uint
+      start: 3
+      end: 4
+      description: Full scale for pre-filtered FIFO data and OIS data
+      conversion:
+        name: ois_range
+        range_250:
+          value: 0x00
+          description: +/-250dps, 131.2 LSB/dps
+        range_2000:
+          value: 0x01
+          description: +/-2000dps, 16.4 LSB/dps
+
+aux_conf:
+  type: register
+  address: 0x44
+  access: RW
+  size_bits: 8
+  reset_value: 0x46
+  description: Sets the output data rate of the Auxiliary sensor interface
+  fields:
+    aux_odr:
+      base: uint
+      start: 0
+      end: 4
+      description: Poll rate for the magnetometer attached to the Auxiliary sensor interface
+      try_conversion:
+        name: aux_odr
+        odr_0p78:
+          value: 0x01
+          description: 25/32Hz
+        odr_1p5:
+          value: 0x02
+          description: 25/16Hz
+        odr_3p1:
+          value: 0x03
+          description: 25/8Hz
+        odr_6p25:
+          value: 0x04
+          description: 25/4Hz
+        odr_12p5:
+          value: 0x05
+          description: 25/2Hz
+        odr_25:
+          value: 0x06
+          description: 25Hz
+        odr_50:
+          value: 0x07
+          description: 50Hz
+        odr_100:
+          value: 0x08
+          description: 100Hz
+        odr_200:
+          value: 0x09
+          description: 200Hz
+        odr_400:
+          value: 0x0A
+          description: 400Hz
+        odr_800:
+          value: 0x0B
+          description: 800Hz
+    aux_offset:
+      base: uint
+      start: 4
+      end: 8
+      description: Trigger-readout offset in units of 2.5ms
+
+fifo_downs:
+  type: register
+  address: 0x45
+  access: RW
+  size_bits: 8
+  reset_value: 0x88
+  description: Configure Gyroscope and Accelerometer downsampling rates for FIFO
+  fields:
+    gyr_fifo_downs:
+      base: uint
+      start: 0
+      end: 3
+      description: Downsampling for Gyroscope (2**downs_gyro)
+    gyr_fifo_filt_data:
+      base: uint
+      start: 3
+      end: 4
+      description: Selects filtered or unfiltered Gyroscope data for FIFO
+      conversion:
+        name: fifo_filt_data
+        unfiltered:
+          value: 0x00
+          description: Unfiltered data
+        filtered:
+          value: 0x01
+          description: Filtered data
+    acc_fifo_downs:
+      base: uint
+      start: 4
+      end: 7
+      description: Downsampling for Accelerometer (2**downs_accel)
+    acc_fifo_filt_data:
+      base: uint
+      start: 7
+      end: 8
+      description: Selects filtered or unfiltered Accelerometer data for FIFO
+      conversion:
+        name: acc_fifo_filt_data
+        unfiltered:
+          value: 0x00
+          description: Unfiltered data
+        filtered:
+          value: 0x01
+          description: Filtered data
+
+fifo_wtm_0:
+  type: register
+  address: 0x46
+  access: RW
+  size_bits: 8
+  description: FIFO Watermark level LSB
+  fields:
+    fifo_water_mark_7_0:
+      base: uint
+      start: 0
+      end: 8
+      description: Trigger interrupt when FIFO contains fifo_water_mark_7_0 + fifo_water_mark_12_8 * 256 bytes
+
+fifo_wtm_1:
+  type: register
+  address: 0x47
+  access: RW
+  size_bits: 8
+  reset_value: 0x02
+  description: FIFO Watermark level MSB
+  fields:
+    fifo_water_mark_12_8:
+      base: uint
+      start: 0
+      end: 5
+      description: Trigger interrupt when FIFO contains fifo_water_mark_7_0 + fifo_water_mark_12_8 * 256 bytes
+
 fifo_config_0:
   type: register
   address: 0x48
@@ -515,6 +887,174 @@ fifo_config_1:
     fifo_gyr_en:
       base: bool
       start: 7
+
+saturation:
+  type: register
+  address: 0x4A
+  access: RO
+  size_bits: 8
+  description: Contains information if raw data samples have been saturated
+  fields:
+    acc_x:
+      base: bool
+      start: 0
+      description: ACC X-axis raw data saturation flag
+    acc_y:
+      base: bool
+      start: 1
+      description: ACC Y-axis raw data saturation flag
+    acc_z:
+      base: bool
+      start: 2
+      description: ACC Z-axis raw data saturation flag
+    gyr_x:
+      base: bool
+      start: 3
+      description: GYR X-axis raw data saturation flag
+    gyr_y:
+      base: bool
+      start: 4
+      description: GYR Y-axis raw data saturation flag
+    gyr_z:
+      base: bool
+      start: 5
+      description: GYR Z-axis raw data saturation flag
+
+aux_dev_id:
+  type: register
+  address: 0x4B
+  access: RW
+  size_bits: 8
+  reset_value: 0x20
+  description: Auxiliary interface device_id
+  fields:
+    i2c_device_addr:
+      base: uint
+      start: 1
+      end: 8
+      description: I2C device address of Auxiliary sensor
+
+aux_if_conf:
+  type: register
+  address: 0x4C
+  access: RW
+  size_bits: 8
+  reset_value: 0x83
+  description: Auxiliary interface configuration register
+  fields:
+    aux_rd_burst:
+      base: uint
+      start: 0
+      end: 2
+      description: Burst data length
+      conversion:
+        name: aux_burst_length
+        bl1:
+          value: 0x00
+          description: Burst length 1
+        bl2:
+          value: 0x01
+          description: Burst length 2
+        bl6:
+          value: 0x02
+          description: Burst length 6
+        bl8:
+          value: 0x03
+          description: Burst length 8
+    man_rd_burst:
+      base: uint
+      start: 2
+      end: 4
+      description: Manual burst data length
+      conversion:
+        name: man_burst_length
+        bl1:
+          value: 0x00
+          description: Burst length 1
+        bl2:
+          value: 0x01
+          description: Burst length 2
+        bl6:
+          value: 0x02
+          description: Burst length 6
+        bl8:
+          value: 0x03
+          description: Burst length 8
+    aux_fcu_write_en:
+      base: bool
+      start: 6
+      description: Enables FCU write command on AUX IF for auxiliary sensors that need a trigger
+    aux_manual_en:
+      base: bool
+      start: 7
+      description: Switches auxiliary interface between automatic and manual mode
+
+aux_rd_addr:
+  type: register
+  address: 0x4D
+  access: RW
+  size_bits: 8
+  reset_value: 0x42
+  description: Auxiliary interface read address
+  fields:
+    read_addr:
+      base: uint
+      start: 0
+      end: 8
+      description: Address to read. In manual mode it triggers the read operation
+
+aux_wr_addr:
+  type: register
+  address: 0x4E
+  access: RW
+  size_bits: 8
+  reset_value: 0x4C
+  description: Auxiliary interface write address
+  fields:
+    write_addr:
+      base: uint
+      start: 0
+      end: 8
+      description: Address to write. In manual mode it triggers the write operation
+
+aux_wr_data:
+  type: register
+  address: 0x4F
+  access: RW
+  size_bits: 8
+  reset_value: 0x02
+  description: Auxiliary interface write data
+  fields:
+    write_data:
+      base: uint
+      start: 0
+      end: 8
+      description: Data to write
+
+err_reg_msk:
+  type: register
+  address: 0x52
+  access: RW
+  size_bits: 8
+  description: Defines which error flag will trigger the error interrupt
+  fields:
+    fatal_err:
+      base: bool
+      start: 0
+      description: Use fatal error to generate the error interrupt
+    internal_err:
+      base: uint
+      start: 1
+      end: 5
+      description: Use internal error to generate the error interrupt
+    fifo_err:
+      base: bool
+      start: 6
+      description: Use fifo error to generate the error interrupt
+    aux_err:
+      base: bool
+      start: 7
+      description: Use aux interface error to generate the error interrupt
 
 int1_io_ctrl:
   type: register
@@ -699,8 +1239,438 @@ init_addr:
 init_data:
   type: buffer
   address: 0x5E
-  access: WO
+  access: RW
   description: Register for initialization data
+
+internal_error:
+  type: register
+  address: 0x5F
+  access: RO
+  size_bits: 8
+  description: Internal error flags
+  fields:
+    int_err_1:
+      base: bool
+      start: 1
+      description: Internal error flag - long processing time, processing halted
+    int_err_2:
+      base: bool
+      start: 2
+      description: Internal error flag - fatal error, processing halted
+    feat_eng_disabled:
+      base: bool
+      start: 4
+      description: Feature engine has been disabled by host during sensor operation
+
+aux_if_trim:
+  type: register
+  address: 0x68
+  access: RW
+  size_bits: 8
+  reset_value: 0x01
+  description: Auxiliary interface trim register (NVM backed)
+  fields:
+    asda_pupsel:
+      base: uint
+      start: 0
+      end: 2
+      description: Pullup configuration for ASDA
+      conversion:
+        name: asda_pullup
+        pup_res_off:
+          value: 0x00
+          description: Pullup off
+        pup_res_40k:
+          value: 0x01
+          description: Pullup 40k
+        pup_res_10k:
+          value: 0x02
+          description: Pullup 10k
+        pup_res_2k:
+          value: 0x03
+          description: Pullup 2k
+
+gyr_crt_conf:
+  type: register
+  address: 0x69
+  access: RW
+  size_bits: 8
+  description: Component Retrimming for Gyroscope
+  fields:
+    crt_running:
+      base: uint
+      start: 2
+      end: 3
+      description: Indicates that CRT is currently running
+      conversion:
+        name: crt_running
+        disabled:
+          value: 0x00
+          description: Disabled
+        enabled:
+          value: 0x01
+          description: Enabled
+    rdy_for_dl:
+      base: uint
+      start: 3
+      end: 4
+      description: Pacemaker bit for downloading the CRT data
+      conversion:
+        name: rdy_for_dl
+        ongoing:
+          value: 0x00
+          description: Ongoing or not started
+        complete:
+          value: 0x01
+          description: Complete
+
+nvm_conf:
+  type: register
+  address: 0x6A
+  access: RW
+  size_bits: 8
+  description: NVM Configuration
+  fields:
+    nvm_prog_en:
+      base: uint
+      start: 1
+      end: 2
+      description: Enable NVM programming
+      conversion:
+        name: nvm_prog_en
+        disable:
+          value: 0x00
+          description: Disable
+        enable:
+          value: 0x01
+          description: Enable
+
+if_conf:
+  type: register
+  address: 0x6B
+  access: RW
+  size_bits: 8
+  description: Serial interface settings
+  fields:
+    spi3:
+      base: uint
+      start: 0
+      end: 1
+      description: Configure SPI Interface Mode for primary interface
+      conversion:
+        name: spi_mode
+        spi4:
+          value: 0x00
+          description: SPI 4-wire mode
+        spi3:
+          value: 0x01
+          description: SPI 3-wire mode
+    spi3_ois:
+      base: uint
+      start: 1
+      end: 2
+      description: Configure SPI Interface Mode for OIS interface
+      conversion:
+        name: spi_mode_ois
+        spi4:
+          value: 0x00
+          description: SPI 4-wire mode
+        spi3:
+          value: 0x01
+          description: SPI 3-wire mode
+    ois_en:
+      base: bool
+      start: 4
+      description: Interface configuration - OIS enable bit
+    aux_en:
+      base: bool
+      start: 5
+      description: Interface configuration - AUX enable bit
+
+drv:
+  type: register
+  address: 0x6C
+  access: RW
+  size_bits: 8
+  reset_value: 0xAA
+  description: Drive strength control register (NVM backed)
+  fields:
+    io_pad_drv1:
+      base: uint
+      start: 0
+      end: 3
+      description: Output pad drive strength setting for the SDO and SDx pins
+    io_pad_i2c_b1:
+      base: bool
+      start: 3
+      description: Disable additional pull down strength of SDx pin in I2C mode
+    io_pad_drv2:
+      base: uint
+      start: 4
+      end: 7
+      description: Output pad drive strength setting for OSDO, ASCx, and ASDx pins
+    io_pad_i2c_b2:
+      base: bool
+      start: 7
+      description: Disable additional pull down strength of ASCx and ASDx pins in I2C mode
+
+acc_self_test:
+  type: register
+  address: 0x6D
+  access: RW
+  size_bits: 8
+  description: Settings for the accelerometer self-test configuration and trigger
+  fields:
+    acc_self_test_en:
+      base: uint
+      start: 0
+      end: 1
+      description: Enable accelerometer self-test
+      conversion:
+        name: acc_self_test_en
+        disabled:
+          value: 0x00
+          description: Disabled
+        enabled:
+          value: 0x01
+          description: Enabled
+    acc_self_test_sign:
+      base: uint
+      start: 2
+      end: 3
+      description: Select sign of self-test excitation
+      conversion:
+        name: acc_self_test_sign
+        negative:
+          value: 0x00
+          description: Negative
+        positive:
+          value: 0x01
+          description: Positive
+    acc_self_test_amp:
+      base: uint
+      start: 3
+      end: 4
+      description: Select amplitude of the selftest deflection
+      conversion:
+        name: acc_self_test_amp
+        low:
+          value: 0x00
+          description: Low
+        high:
+          value: 0x01
+          description: High
+
+gyr_self_test_axes:
+  type: register
+  address: 0x6E
+  access: RO
+  size_bits: 8
+  description: Settings for the gyroscope AXES self-test configuration and trigger
+  fields:
+    gyr_st_axes_done:
+      base: bool
+      start: 0
+      description: STATUS - functional test of detection channels finished
+    gyr_axis_x_ok:
+      base: bool
+      start: 1
+      description: Status of gyro X-axis self test
+    gyr_axis_y_ok:
+      base: bool
+      start: 2
+      description: Status of gyro Y-axis self test
+    gyr_axis_z_ok:
+      base: bool
+      start: 3
+      description: Status of gyro Z-axis self test
+
+nv_conf:
+  type: register
+  address: 0x70
+  access: RW
+  size_bits: 8
+  description: NVM backed configuration bits
+  fields:
+    spi_en:
+      base: uint
+      start: 0
+      end: 1
+      description: Disable I2C and enable SPI for primary interface
+      conversion:
+        name: spi_en
+        disabled:
+          value: 0x00
+          description: I2C enabled
+        enabled:
+          value: 0x01
+          description: I2C disabled
+    i2c_wdt_sel:
+      base: uint
+      start: 1
+      end: 2
+      description: Select timer period for I2C Watchdog
+      conversion:
+        name: i2c_wdt_sel
+        short:
+          value: 0x00
+          description: I2C watchdog timeout after 1.25ms
+        long:
+          value: 0x01
+          description: I2C watchdog timeout after 40ms
+    i2c_wdt_en:
+      base: uint
+      start: 2
+      end: 3
+      description: I2C Watchdog at the SDA pin in I2C interface mode
+      conversion:
+        name: i2c_wdt_en
+        disable:
+          value: 0x00
+          description: Disable I2C watchdog
+        enable:
+          value: 0x01
+          description: Enable I2C watchdog
+    acc_off_en:
+      base: uint
+      start: 3
+      end: 4
+      description: Add offset to filtered and unfiltered Accelerometer data
+      conversion:
+        name: acc_off_en
+        disabled:
+          value: 0x00
+          description: Disabled
+        enabled:
+          value: 0x01
+          description: Enabled
+
+offset_0:
+  type: register
+  address: 0x71
+  access: RW
+  size_bits: 8
+  description: Offset compensation for Accelerometer X-axis (NVM backed)
+  fields:
+    off_acc_x:
+      base: uint
+      start: 0
+      end: 8
+      description: Accelerometer offset compensation (X-axis)
+
+offset_1:
+  type: register
+  address: 0x72
+  access: RW
+  size_bits: 8
+  description: Offset compensation for Accelerometer Y-axis (NVM backed)
+  fields:
+    off_acc_y:
+      base: uint
+      start: 0
+      end: 8
+      description: Accelerometer offset compensation (Y-axis)
+
+offset_2:
+  type: register
+  address: 0x73
+  access: RW
+  size_bits: 8
+  description: Offset compensation for Accelerometer Z-axis (NVM backed)
+  fields:
+    off_acc_z:
+      base: uint
+      start: 0
+      end: 8
+      description: Accelerometer offset compensation (Z-axis)
+
+offset_3:
+  type: register
+  address: 0x74
+  access: RW
+  size_bits: 8
+  description: Offset compensation for Gyroscope X-axis (NVM backed)
+  fields:
+    gyr_usr_off_x_7_0:
+      base: uint
+      start: 0
+      end: 8
+      description: Gyroscope offset compensation (X-axis)
+
+offset_4:
+  type: register
+  address: 0x75
+  access: RW
+  size_bits: 8
+  description: Offset compensation for Gyroscope Y-axis (NVM backed)
+  fields:
+    gyr_usr_off_y_7_0:
+      base: uint
+      start: 0
+      end: 8
+      description: Gyroscope offset compensation (Y-axis)
+
+offset_5:
+  type: register
+  address: 0x76
+  access: RW
+  size_bits: 8
+  description: Offset compensation for Gyroscope Z-axis (NVM backed)
+  fields:
+    gyr_usr_off_z_7_0:
+      base: uint
+      start: 0
+      end: 8
+      description: Gyroscope offset compensation (Z-axis)
+
+offset_6:
+  type: register
+  address: 0x77
+  access: RW
+  size_bits: 8
+  description: Offset compensation (MSBs gyroscope, enables) (NVM backed)
+  fields:
+    gyr_usr_off_x_9_8:
+      base: uint
+      start: 0
+      end: 2
+      description: Gyroscope offset compensation (X-axis)
+    gyr_usr_off_y_9_8:
+      base: uint
+      start: 2
+      end: 4
+      description: Gyroscope offset compensation (Y-axis)
+    gyr_usr_off_z_9_8:
+      base: uint
+      start: 4
+      end: 6
+      description: Gyroscope offset compensation (Z-axis)
+    gyr_off_en:
+      base: uint
+      start: 6
+      end: 7
+      description: Add offset to filtered and unfiltered Gyroscope data
+      conversion:
+        name: gyr_off_en
+        disabled:
+          value: 0x00
+          description: Disabled
+        enabled:
+          value: 0x01
+          description: Enabled
+    gyr_gain_en:
+      base: uint
+      start: 7
+      end: 8
+      description: Compensate the gain as described in Sensitivity Error Compensation
+      conversion:
+        name: gyr_gain_en
+        disabled:
+          value: 0x00
+          description: Disabled
+        enabled:
+          value: 0x01
+          description: Enabled
 
 pwr_conf:
   type: register

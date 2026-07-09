@@ -1,3 +1,5 @@
+use core::num::NonZeroU8;
+
 #[cfg(test)]
 mod test;
 
@@ -9,18 +11,14 @@ device_driver::create_device!(
     manifest: "src/ll/ll.yaml"
 );
 
-impl Into<usize> for AuxBurstLength {
-    fn into(self) -> usize {
-        aux_burst_length_to_usize(self)
-    }
-}
-
-pub const fn aux_burst_length_to_usize(l: AuxBurstLength) -> usize {
-    match l {
-        AuxBurstLength::Bl1 => 1,
-        AuxBurstLength::Bl2 => 2,
-        AuxBurstLength::Bl6 => 6,
-        AuxBurstLength::Bl8 => 8,
+impl From<AuxBurstLength> for NonZeroU8 {
+    fn from(value: AuxBurstLength) -> Self {
+        match value {
+            AuxBurstLength::Bl1 => Self::new(1).unwrap(),
+            AuxBurstLength::Bl2 => Self::new(2).unwrap(),
+            AuxBurstLength::Bl6 => Self::new(6).unwrap(),
+            AuxBurstLength::Bl8 => Self::new(8).unwrap(),
+        }
     }
 }
 

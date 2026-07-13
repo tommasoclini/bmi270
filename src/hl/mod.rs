@@ -8,6 +8,7 @@ use crate::ll::{
 };
 
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub enum FifoDataFrame {
     Reserved,
     Regular(RegularFrame),
@@ -15,6 +16,7 @@ pub enum FifoDataFrame {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct RegularFrame {
     pub aux: Option<[u8; 8]>,
     pub gyr: Option<Gyr>,
@@ -34,6 +36,7 @@ impl RegularFrame {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub enum ControlFrame {
     SkipFrame(u8),
     SensorTime(SensorTime),
@@ -77,6 +80,7 @@ pub struct FrameParser {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
 pub struct ParsingError;
 
 impl FrameParser {

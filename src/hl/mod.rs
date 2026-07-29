@@ -4,7 +4,7 @@ use heapless::Vec;
 
 use crate::ll::{
     AuxBurstLength,
-    field_sets::{Acc, Gyr, SensorTime},
+    field_sets::{Acc, Aux, Gyr, SensorTime},
 };
 
 #[derive(Debug)]
@@ -22,8 +22,6 @@ pub struct RegularFrame {
     pub gyr: Option<Gyr>,
     pub acc: Option<Acc>,
 }
-
-pub const AUX_BURST_DATA_MAX_LEN: usize = 8;
 
 impl RegularFrame {
     pub const fn empty() -> Self {
@@ -64,7 +62,7 @@ impl ControlFrameKind {
 enum FrameParserState {
     Kind,
     Regular {
-        aux: Option<Vec<u8, { AUX_BURST_DATA_MAX_LEN }, u8>>,
+        aux: Option<Vec<u8, { size_of::<Aux>() }, u8>>,
         gyr: Option<Vec<u8, { size_of::<Gyr>() }, u8>>,
         acc: Option<Vec<u8, { size_of::<Acc>() }, u8>>,
     },
@@ -98,7 +96,7 @@ impl FrameParser {
 
     /// feeds a slice of data to the parser, returns how many bytes were used.
     /// this means that unused bytes must be fed again for a new frame,
-    /// this mechanism goes well with BufRead.
+    /// this mechanism goes well with `BufRead`.
     pub fn feed(&mut self, data: &[u8]) -> Result<(usize, Option<FifoDataFrame>), ParsingError> {
         let mut i = 0;
         for b in data {
@@ -146,44 +144,40 @@ impl FrameParser {
             FrameParserState::Kind => None,
             FrameParserState::Regular { aux, gyr, acc } => {
                 Some(FifoDataFrame::Regular(RegularFrame {
-                    aux: aux.as_ref().map(|val| {
-                        let mut buf = [0; AUX_BURST_DATA_MAX_LEN];
-                        buf[..val.len()].copy_from_slice(val.as_slice());
-                        buf
-                    }),
-                    gyr: if let Some(v) = gyr
-                        && v.is_full()
+                    aux: if let Some(aux_len) = self.aux
+                        && let Some(aux) = aux
                     {
-                        Some(*unsafe { &*v.as_ptr().cast() })
+                        if aux.len() == aux_len.get() as usize {
+                            let mut buf = [0; size_of::<Aux>()];
+                            buf[..aux.len()].copy_from_slice(aux);
+                            Some(buf)
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     },
-                    acc: if let Some(v) = acc
-                        && v.is_full()
-                    {
-                        Some(*unsafe { &*v.as_ptr().cast() })
-                    } else {
-                        None
-                    },
+                    gyr: gyr
+                        .as_deref()
+                        .and_then(<[u8]>::as_array::<{ size_of::<Gyr>() }>)
+                        .copied()
+                        .map(Into::into),
+                    acc: acc
+                        .as_deref()
+                        .and_then(<[u8]>::as_array::<{ size_of::<Acc>() }>)
+                        .copied()
+                        .map(Into::into),
                 }))
             }
-            FrameParserState::Control { kind, data } => {
-                if data.len() == kind.len() {
-                    Some(FifoDataFrame::Control(match kind {
-                        ControlFrameKind::SkipFrame => {
-                            ControlFrame::SkipFrame(*unsafe { &*data.as_ptr().cast() })
-                        }
-                        ControlFrameKind::SensorTime => {
-                            ControlFrame::SensorTime(*unsafe { &*data.as_ptr().cast() })
-                        }
-                        ControlFrameKind::FifoInputConfig => {
-                            ControlFrame::FifoInputConfig(*unsafe { &*data.as_ptr().cast() })
-                        }
-                    }))
-                } else {
-                    None
-                }
-            }
+            FrameParserState::Control { kind, data } => Some(FifoDataFrame::Control(match kind {
+                ControlFrameKind::SkipFrame => ControlFrame::SkipFrame(data.as_array::<1>()?[0]),
+                ControlFrameKind::SensorTime => ControlFrame::SensorTime(
+                    (*data.as_array::<{ size_of::<SensorTime>() }>()?).into(),
+                ),
+                ControlFrameKind::FifoInputConfig => ControlFrame::FifoInputConfig(
+                    *data.as_array::<{ size_of::<FifoInputConfig>() }>()?,
+                ),
+            })),
         }
     }
 

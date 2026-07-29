@@ -94,6 +94,23 @@ aux:
   access: RO
   size_bits: 64
   description: Auxiliary sensor data
+  fields:
+      x:
+        base: int
+        start: 0
+        end: 16
+      y:
+        base: int
+        start: 16
+        end: 32
+      z:
+        base: int
+        start: 32
+        end: 48
+      r:
+        base: int
+        start: 48
+        end: 64
 
 acc:
   type: register

@@ -97,16 +97,21 @@ impl FrameParser {
     /// feeds a slice of data to the parser, returns how many bytes were used.
     /// this means that unused bytes must be fed again for a new frame,
     /// this mechanism goes well with `BufRead`.
-    pub fn feed(&mut self, data: &[u8]) -> Result<(usize, Option<FifoDataFrame>), ParsingError> {
+    pub fn feed(&mut self, data: &[u8]) -> (usize, Result<Option<FifoDataFrame>, ParsingError>) {
         let mut i = 0;
+        let mut res = Ok(None);
         for b in data {
-            self.push(*b)?;
+            if let Err(e) = self.push(*b) {
+                res = Err(e);
+                break;
+            }
             i += 1;
             if self.frame_ready() {
+                res = Ok(self.try_frame());
                 break;
             }
         }
-        Ok((i, self.try_frame()))
+        (i, res)
     }
 
     /// checks if a frame can be constructed from state

@@ -287,7 +287,9 @@ async fn main(_s: Spawner) -> ! {
 
                         let mut start = 0;
                         loop {
-                            match parser.feed(&buf[start..size]) {
+                            let (used, res) = parser.feed(&buf[start..size]);
+                            start += used;
+                            match res {
                                 Err(e) => {
                                     warn!("failed to parse fifo data: {:?}", e);
                                     _ = bmi
@@ -296,61 +298,57 @@ async fn main(_s: Spawner) -> ! {
                                         .await
                                         .inspect_err(|e| warn!("failed to clear fifo data: {}", e));
                                     parser.reset();
-                                    break;
                                 }
-                                Ok((n, f)) => {
-                                    start += n;
-                                    if let Some(frame) = f {
-                                        if let hl::FifoDataFrame::Regular(hl::RegularFrame {
-                                            acc: Some(acc_data),
-                                            gyr: Some(gyr_data),
-                                            ..
-                                        }) = frame
-                                        {
-                                            const ACC_FSR: f32 = 8.0;
-                                            const GYR_FSR: f32 = 2000.0;
-                                            const I16_MAX_F32: f32 = i16::MAX as f32;
-                                            const ACC_SCALE: f32 = ACC_FSR / I16_MAX_F32;
-                                            const GYR_SCALE: f32 = GYR_FSR / I16_MAX_F32;
+                                Ok(Some(frame)) => {
+                                    if let hl::FifoDataFrame::Regular(hl::RegularFrame {
+                                        acc: Some(acc_data),
+                                        gyr: Some(gyr_data),
+                                        ..
+                                    }) = frame
+                                    {
+                                        const ACC_FSR: f32 = 8.0;
+                                        const GYR_FSR: f32 = 2000.0;
+                                        const I16_MAX_F32: f32 = i16::MAX as f32;
+                                        const ACC_SCALE: f32 = ACC_FSR / I16_MAX_F32;
+                                        const GYR_SCALE: f32 = GYR_FSR / I16_MAX_F32;
 
-                                            let roll_rate = gyr_data.x() as f32 * GYR_SCALE;
-                                            let pitch_rate = gyr_data.y() as f32 * GYR_SCALE;
-                                            // let yaw_rate = gyr_data.z() as f32 * GYR_SCALE;
+                                        let roll_rate = gyr_data.x() as f32 * GYR_SCALE;
+                                        let pitch_rate = gyr_data.y() as f32 * GYR_SCALE;
+                                        // let yaw_rate = gyr_data.z() as f32 * GYR_SCALE;
 
-                                            let x_acc = acc_data.x() as f32 * ACC_SCALE;
-                                            let y_acc = acc_data.y() as f32 * ACC_SCALE;
-                                            let z_acc = acc_data.z() as f32 * ACC_SCALE;
+                                        let x_acc = acc_data.x() as f32 * ACC_SCALE;
+                                        let y_acc = acc_data.y() as f32 * ACC_SCALE;
+                                        let z_acc = acc_data.z() as f32 * ACC_SCALE;
 
-                                            const RAD_TO_DEG: f32 = 180.0 / core::f32::consts::PI;
+                                        const RAD_TO_DEG: f32 = 180.0 / core::f32::consts::PI;
 
-                                            let angle_roll = libm::atan2f(
-                                                y_acc,
-                                                libm::sqrtf(x_acc * x_acc + z_acc * z_acc),
-                                            ) * RAD_TO_DEG;
-                                            let angle_pitch = -libm::atan2f(
-                                                x_acc,
-                                                libm::sqrtf(y_acc * y_acc + z_acc * z_acc),
-                                            ) * RAD_TO_DEG;
+                                        let angle_roll = libm::atan2f(
+                                            y_acc,
+                                            libm::sqrtf(x_acc * x_acc + z_acc * z_acc),
+                                        ) * RAD_TO_DEG;
+                                        let angle_pitch = -libm::atan2f(
+                                            x_acc,
+                                            libm::sqrtf(y_acc * y_acc + z_acc * z_acc),
+                                        ) * RAD_TO_DEG;
 
-                                            const COMP_FILTER_GAIN: f32 = 0.98;
-                                            /// inverse of the odr
-                                            const T: f32 = 1.0 / 200.0;
+                                        const COMP_FILTER_GAIN: f32 = 0.98;
+                                        /// inverse of the odr
+                                        const T: f32 = 1.0 / 200.0;
 
-                                            let mut comp = comp.lock().await;
+                                        let mut comp = comp.lock().await;
 
-                                            comp.roll = COMP_FILTER_GAIN
-                                                * (comp.roll + roll_rate * T)
-                                                + (1.0 - COMP_FILTER_GAIN) * angle_roll;
+                                        comp.roll = COMP_FILTER_GAIN * (comp.roll + roll_rate * T)
+                                            + (1.0 - COMP_FILTER_GAIN) * angle_roll;
 
-                                            comp.pitch = COMP_FILTER_GAIN
-                                                * (comp.pitch + pitch_rate * T)
-                                                + (1.0 - COMP_FILTER_GAIN) * angle_pitch;
-                                        }
-                                        parser.reset();
+                                        comp.pitch = COMP_FILTER_GAIN
+                                            * (comp.pitch + pitch_rate * T)
+                                            + (1.0 - COMP_FILTER_GAIN) * angle_pitch;
                                     }
+                                    parser.reset();
                                 }
+                                Ok(None) => {}
                             }
-                            if start == size {
+                            if start >= size {
                                 break;
                             }
                         }

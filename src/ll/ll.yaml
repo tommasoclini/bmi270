@@ -2,7 +2,7 @@ config:
   default_byte_order: LE
   buffer_address_type: u8
   register_address_type: u8
-  defmt_feature: "defmt-03"
+  defmt_feature: "defmt"
 
 chip_id:
   type: register
@@ -405,7 +405,7 @@ fifo_length:
   type: register
   address: 0x24
   access: RO
-  size_bits: 14
+  size_bits: 16
   fields:
     fifo_length:
       base: uint

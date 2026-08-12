@@ -46,7 +46,10 @@ async fn main(_spawner: Spawner) {
     config.scl_pullup = true;
     let twim = twim::Twim::new(p.SERIAL0, Irqs, sda, scl, config);
 
-    let mut bmi = ll::Device::new(ll::DeviceInterface::new(twim, ll::Address::Default));
+    let mut bmi = ll::Device::new(ll::i2c::DeviceInterface::new(
+        twim,
+        ll::i2c::Address::Default,
+    ));
     let chip_id = bmi.chip_id().read_async().await.unwrap();
     assert_eq!(chip_id.chip_id(), 0x24);
 

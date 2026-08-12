@@ -1,8 +1,6 @@
 [package]
 name = "fifo_esp32s3"
-version = "0.1.0"
 edition = "2024"
-rust-version = "1.88"
 
 [[bin]]
 name = "fifo_esp32s3"
@@ -34,7 +32,7 @@ critical-section = "1.2.0"
 embassy-sync = "0.8.0"
 static_cell = "2.1.1"
 
-bmi270 = { path = "../..", features = ["defmt-03"] }
+bmi270 = { path = "../..", features = ["defmt"] }
 embassy-embedded-hal = { version = "0.6.0", features = ["defmt"] }
 embassy-futures = "0.1.2"
 libm = "0.2.16"

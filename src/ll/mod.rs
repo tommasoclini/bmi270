@@ -6,9 +6,9 @@ mod test;
 pub mod i2c;
 pub mod spi;
 
-device_driver::create_device!(
-    device_name: Device,
-    manifest: "src/ll/ll.yaml"
+device_driver::compile!(
+    options: "--rust-defmt-feature=defmt",
+    manifest: "src/ll/ll.ddl"
 );
 
 impl From<AuxBurstLength> for NonZeroU8 {
@@ -23,7 +23,7 @@ impl From<AuxBurstLength> for NonZeroU8 {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum DeviceError<T> {
     Interface(T),
     BufferTooSmall,

@@ -2,13 +2,10 @@ use core::num::NonZeroU8;
 
 use heapless::Vec;
 
-use crate::ll::{
-    AuxBurstLength,
-    field_sets::{Acc, Aux, Gyr, SensorTime},
-};
+use crate::ll::{Acc, Aux, AuxBurstLength, Gyr, SensorTime};
 
 #[derive(Debug)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum FifoDataFrame {
     Reserved,
     Regular(RegularFrame),
@@ -16,7 +13,7 @@ pub enum FifoDataFrame {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct RegularFrame {
     pub aux: Option<[u8; 8]>,
     pub gyr: Option<Gyr>,
@@ -34,7 +31,7 @@ impl RegularFrame {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum ControlFrame {
     SkipFrame(u8),
     SensorTime(SensorTime),
@@ -78,7 +75,7 @@ pub struct FrameParser {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct ParsingError;
 
 impl FrameParser {

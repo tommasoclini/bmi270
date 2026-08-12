@@ -265,7 +265,6 @@ device Device {
         fields: fieldset _ {
             size-bytes: 2,
         
-            /// Should be value 0x24
             field fifo_length 13:0 RW -> uint,
         },
     },
@@ -274,6 +273,16 @@ device Device {
         access: RW,
         address: 38,
     },
+    
+    register feat_page {
+        address: 47,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field page 2:0 RW -> uint,
+        },
+    },
+
     /// Any-motion detection general configuration flags - part 1
     register any_motion1 {
         address: 60,

@@ -1,5 +1,6 @@
 device Device {
-    byte-order: LE,
+    default-byte-order: LE,
+    default-access: RO,
     register-address-type: u8,
     buffer-address-type: u8,
     word-boundaries: "_:-: :bB:A1:1A:1a:a1:AAa",
@@ -11,7 +12,7 @@ device Device {
             size-bytes: 1,
         
             /// Should be value 0x24
-            field chip_id 7:0 RW -> uint,
+            field chip_id 7:0 -> uint,
         },
     },
     /// Reports sensor error conditions
@@ -23,16 +24,16 @@ device Device {
             /// Fatal Error, chip is not in operational state (Boot-,
             /// power-system). This flag will be reset only by power-
             /// on-reset or softreset.
-            field fatal_err 0 RW -> bool,
+            field fatal_err 0 -> bool,
             /// Internal error, please contact your Bosch Sensortec regional support team.
-            field internal_err 3:1 RW -> uint,
+            field internal_err 3:1 -> uint,
             /// Error when a frame is read in streaming mode (so
             /// skipping is not possible) and fifo is overfilled (with
             /// virtual and/or regular frames). This flag will be reset
             /// when read.
-            field fifo_err 6 RW -> bool,
+            field fifo_err 6 -> bool,
             /// Error in I2C-Master detected. This flag will be reset when read.
-            field aux_err 7 RW -> bool,
+            field aux_err 7 -> bool,
         },
     },
     /// Sensor status flags
@@ -44,19 +45,19 @@ device Device {
             /// '1'('0') indicate a (no) Auxiliary sensor interface operation
             /// is ongoing triggered via AUX_RD_ADDR,
             /// AUX_WR_ADDR or from FCU.
-            field aux_busy 2 RW -> bool,
+            field aux_busy 2 -> bool,
             /// CMD decoder status. '0' -> Command in progress '1' ->
             /// Command decoder is ready to accept a new command
-            field cmd_rdy 4 RW -> bool,
+            field cmd_rdy 4 -> bool,
             /// Data ready for Auxiliary sensor. It gets reset, when one
             /// Auxiliary sensor DATA register is read out
-            field drdy_aux 5 RW -> bool,
+            field drdy_aux 5 -> bool,
             /// Data ready for Gyroscope. It gets reset, when one
             /// Gyroscope DATA register is read out
-            field drdy_gyr 6 RW -> bool,
+            field drdy_gyr 6 -> bool,
             /// Data ready for Accelerometer. It gets reset, when one
             /// Accelerometer DATA register is read out
-            field drdy_acc 7 RW -> bool,
+            field drdy_acc 7 -> bool,
         },
     },
     /// Auxiliary sensor data
@@ -65,10 +66,10 @@ device Device {
         fields: fieldset _ {
             size-bytes: 8,
         
-            field x 15:0 RW -> int,
-            field y 31:16 RW -> int,
-            field z 47:32 RW -> int,
-            field r 63:48 RW -> int,
+            field x 15:0 -> int,
+            field y 31:16 -> int,
+            field z 47:32 -> int,
+            field r 63:48 -> int,
         },
     },
     /// Accelerometer data
@@ -77,9 +78,9 @@ device Device {
         fields: fieldset _ {
             size-bytes: 6,
         
-            field x 15:0 RW -> int,
-            field y 31:16 RW -> int,
-            field z 47:32 RW -> int,
+            field x 15:0 -> int,
+            field y 31:16 -> int,
+            field z 47:32 -> int,
         },
     },
     /// Gyroscope data
@@ -88,9 +89,9 @@ device Device {
         fields: fieldset _ {
             size-bytes: 6,
         
-            field x 15:0 RW -> int,
-            field y 31:16 RW -> int,
-            field z 47:32 RW -> int,
+            field x 15:0 -> int,
+            field y 31:16 -> int,
+            field z 47:32 -> int,
         },
     },
     /// Sensor Time
@@ -99,7 +100,7 @@ device Device {
         fields: fieldset _ {
             size-bytes: 3,
         
-            field sensor_time 23:0 RW -> uint,
+            field sensor_time 23:0 -> uint,
         },
     },
     /// Sensor event flags. Will be cleared on read when bit 0 is sent out over the bus.
@@ -108,8 +109,8 @@ device Device {
         fields: fieldset _ {
             size-bytes: 1,
         
-            field por_detected 0 RW -> bool,
-            field error_code 3:2 RW -> uint as enum ErrorCode {
+            field por_detected 0 -> bool,
+            field error_code 3:2 -> uint as enum ErrorCode {
                 /// No error is reported
                 no_error: 0,
                 /// Error in Register ACC_CONF
@@ -128,19 +129,19 @@ device Device {
             size-bytes: 1,
         
             /// Sigmotion output
-            field sig_motion_out 0 RW -> bool,
+            field sig_motion_out 0 -> bool,
             /// Step-counter watermark or Step-detector output
-            field step_counter_out 1 RW -> bool,
+            field step_counter_out 1 -> bool,
             /// Step activity output
-            field activity_out 2 RW -> bool,
+            field activity_out 2 -> bool,
             /// Wrist wear wakeup output
-            field wrist_wear_wakeup_out 3 RW -> bool,
+            field wrist_wear_wakeup_out 3 -> bool,
             /// Wrist gesture output
-            field wrist_gesture_out 4 RW -> bool,
+            field wrist_gesture_out 4 -> bool,
             /// No motion detection output
-            field no_motion_out 5 RW -> bool,
+            field no_motion_out 5 -> bool,
             /// Any motion detection output
-            field any_motion_out 6 RW -> bool,
+            field any_motion_out 6 -> bool,
         },
     },
     /// Interrupt Status 1. Will be cleared on read when bit 0 is sent out over the bus.
@@ -150,17 +151,17 @@ device Device {
             size-bytes: 1,
         
             /// FIFO Full Interrupt
-            field ffull_int 0 RW -> bool,
+            field ffull_int 0 -> bool,
             /// FIFO Watermark Interrupt
-            field fwm_int 1 RW -> bool,
+            field fwm_int 1 -> bool,
             /// ERROR Interrupt
-            field err_int 2 RW -> bool,
+            field err_int 2 -> bool,
             /// Auxiliary Data Ready Interrupt
-            field aux_drdy_int 5 RW -> bool,
+            field aux_drdy_int 5 -> bool,
             /// Gyroscope Data Ready Interrupt
-            field gyr_drdy_int 6 RW -> bool,
+            field gyr_drdy_int 6 -> bool,
             /// Accelerometer Data Ready Interrupt
-            field acc_drdy_int 7 RW -> bool,
+            field acc_drdy_int 7 -> bool,
         },
     },
     /// Step counting value
@@ -170,7 +171,7 @@ device Device {
             size-bytes: 2,
         
             /// Step counter output value
-            field step_count 15:0 RW -> uint,
+            field step_count 15:0 -> uint,
         },
     },
     /// Wrist gesture and activity detection output
@@ -182,7 +183,7 @@ device Device {
             /// Output value of the wrist gesture detection
             /// feature. Value after device initialization is 0b00
             /// i.e. unknown gesture
-            field wr_gest_out 2:0 RW -> uint as try enum WristGesture {
+            field wr_gest_out 2:0 -> uint as try enum WristGesture {
                 /// Unknown gesture
                 unknown_gesture: 0,
                 /// Push arm down gesture
@@ -199,7 +200,7 @@ device Device {
             /// Output value of the activity detection feature.
             /// Value after device initialization is 0b11 i.e.
             /// unknown activity
-            field act_out 4:3 RW -> uint as enum ActivityDetection {
+            field act_out 4:3 -> uint as enum ActivityDetection {
                 /// User stationary
                 still: 0,
                 /// User walking
@@ -218,7 +219,7 @@ device Device {
             size-bytes: 1,
         
             /// Internal Status Message
-            field message 2:0 RW -> uint as enum StatusMessage {
+            field message 2:0 -> uint as enum StatusMessage {
                 /// ASIC is not initialized
                 not_init: 0,
                 /// ASIC initialized
@@ -236,8 +237,8 @@ device Device {
                 /// Compatibility error
                 compat_error: 7,
             },
-            field axes_remap_error 5 RW -> bool,
-            field odr_50hz_error 6 RW -> bool,
+            field axes_remap_error 5 -> bool,
+            field odr_50hz_error 6 -> bool,
         },
     },
     /// Temperature data
@@ -257,7 +258,7 @@ device Device {
         fields: fieldset _ {
             size-bytes: 2,
         
-            field data 15:0 RW -> uint,
+            field data 15:0 -> uint,
         },
     },
     register fifo_length {
@@ -265,17 +266,17 @@ device Device {
         fields: fieldset _ {
             size-bytes: 2,
         
-            field fifo_length 13:0 RW -> uint,
+            field fifo_length 13:0 -> uint,
         },
     },
     /// FIFO_DATA register
     buffer fifo_data {
-        access: RW,
         address: 38,
     },
     
     register feat_page {
         address: 47,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
 
@@ -286,6 +287,7 @@ device Device {
     /// Any-motion detection general configuration flags - part 1
     register any_motion1 {
         address: 60,
+        access: RW,
         reset: 57349,
         fields: fieldset _ {
             size-bytes: 2,
@@ -299,6 +301,7 @@ device Device {
     /// Any-motion detection general configuration flags - part 2
     register any_motion2 {
         address: 62,
+        access: RW,
         reset: 14506,
         fields: fieldset _ {
             size-bytes: 2,
@@ -312,6 +315,7 @@ device Device {
     /// Power mode control register
     register acc_conf {
         address: 64,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -376,6 +380,7 @@ device Device {
     /// Selection of the Accelerometer g-range
     register acc_range_reg {
         address: 65,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -395,6 +400,7 @@ device Device {
     /// Sets the output data rate and the bandwidth of the Gyroscope
     register gyr_conf {
         address: 66,
+        access: RW,
         reset: 169,
         fields: fieldset _ {
             size-bytes: 1,
@@ -448,6 +454,7 @@ device Device {
     /// Defines the Gyroscope angular rate measurement range
     register gyr_range_reg {
         address: 67,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -476,6 +483,7 @@ device Device {
     /// Sets the output data rate of the Auxiliary sensor interface
     register aux_conf {
         address: 68,
+        access: RW,
         reset: 70,
         fields: fieldset _ {
             size-bytes: 1,
@@ -512,6 +520,7 @@ device Device {
     /// Configure Gyroscope and Accelerometer downsampling rates for FIFO
     register fifo_downs {
         address: 69,
+        access: RW,
         reset: 136,
         fields: fieldset _ {
             size-bytes: 1,
@@ -539,6 +548,7 @@ device Device {
     /// FIFO Watermark level LSB
     register fifo_wtm_0 {
         address: 70,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -549,6 +559,7 @@ device Device {
     /// FIFO Watermark level MSB
     register fifo_wtm_1 {
         address: 71,
+        access: RW,
         reset: 2,
         fields: fieldset _ {
             size-bytes: 1,
@@ -560,6 +571,7 @@ device Device {
     /// FIFO frame content configuration
     register fifo_config_0 {
         address: 72,
+        access: RW,
         reset: 2,
         fields: fieldset _ {
             size-bytes: 1,
@@ -573,6 +585,7 @@ device Device {
     /// FIFO frame content configuration
     register fifo_config_1 {
         address: 73,
+        access: RW,
         reset: 16,
         fields: fieldset _ {
             size-bytes: 1,
@@ -594,22 +607,23 @@ device Device {
             size-bytes: 1,
         
             /// ACC X-axis raw data saturation flag
-            field acc_x 0 RW -> bool,
+            field acc_x 0 -> bool,
             /// ACC Y-axis raw data saturation flag
-            field acc_y 1 RW -> bool,
+            field acc_y 1 -> bool,
             /// ACC Z-axis raw data saturation flag
-            field acc_z 2 RW -> bool,
+            field acc_z 2 -> bool,
             /// GYR X-axis raw data saturation flag
-            field gyr_x 3 RW -> bool,
+            field gyr_x 3 -> bool,
             /// GYR Y-axis raw data saturation flag
-            field gyr_y 4 RW -> bool,
+            field gyr_y 4 -> bool,
             /// GYR Z-axis raw data saturation flag
-            field gyr_z 5 RW -> bool,
+            field gyr_z 5 -> bool,
         },
     },
     /// Auxiliary interface device_id
     register aux_dev_id {
         address: 75,
+        access: RW,
         reset: 32,
         fields: fieldset _ {
             size-bytes: 1,
@@ -621,6 +635,7 @@ device Device {
     /// Auxiliary interface configuration register
     register aux_if_conf {
         address: 76,
+        access: RW,
         reset: 131,
         fields: fieldset _ {
             size-bytes: 1,
@@ -656,6 +671,7 @@ device Device {
     /// Auxiliary interface read address
     register aux_rd_addr {
         address: 77,
+        access: RW,
         reset: 66,
         fields: fieldset _ {
             size-bytes: 1,
@@ -667,6 +683,7 @@ device Device {
     /// Auxiliary interface write address
     register aux_wr_addr {
         address: 78,
+        access: RW,
         reset: 76,
         fields: fieldset _ {
             size-bytes: 1,
@@ -678,6 +695,7 @@ device Device {
     /// Auxiliary interface write data
     register aux_wr_data {
         address: 79,
+        access: RW,
         reset: 2,
         fields: fieldset _ {
             size-bytes: 1,
@@ -689,6 +707,7 @@ device Device {
     /// Defines which error flag will trigger the error interrupt
     register err_reg_msk {
         address: 82,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -705,6 +724,7 @@ device Device {
     /// Configure the electrical behavior of the interrupt pin INT1
     register int1_io_ctrl {
         address: 83,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -727,11 +747,13 @@ device Device {
     /// Configure the electrical behavior of the interrupt pin INT2
     register int2_io_ctrl {
         address: 84,
+        access: RW,
         fields: int1_io_ctrl,
     },
     /// Configure interrupt latch modes
     register int_latch {
         address: 85,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -747,6 +769,7 @@ device Device {
     /// Interrupt/Feature mapping on INT1
     register int1_map_feat {
         address: 86,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -769,11 +792,13 @@ device Device {
     /// Interrupt/Feature mapping on INT2
     register int2_map_feat {
         address: 87,
+        access: RW,
         fields: int1_map_feat,
     },
     /// Data Interrupt mapping of both INT pins
     register int_map_data {
         address: 88,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -798,6 +823,7 @@ device Device {
     /// Start initialization
     register init_ctrl {
         address: 89,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -809,6 +835,7 @@ device Device {
     /// operation. Please ignore, if your host supports to load the initialization data in a single 8kB burst write operation.
     register init_addr {
         address: 91,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 2,
         
@@ -830,16 +857,17 @@ device Device {
             size-bytes: 1,
         
             /// Internal error flag - long processing time, processing halted
-            field int_err_1 1 RW -> bool,
+            field int_err_1 1 -> bool,
             /// Internal error flag - fatal error, processing halted
-            field int_err_2 2 RW -> bool,
+            field int_err_2 2 -> bool,
             /// Feature engine has been disabled by host during sensor operation
-            field feat_eng_disabled 4 RW -> bool,
+            field feat_eng_disabled 4 -> bool,
         },
     },
     /// Auxiliary interface trim register (NVM backed)
     register aux_if_trim {
         address: 104,
+        access: RW,
         reset: 1,
         fields: fieldset _ {
             size-bytes: 1,
@@ -860,6 +888,7 @@ device Device {
     /// Component Retrimming for Gyroscope
     register gyr_crt_conf {
         address: 105,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -871,7 +900,7 @@ device Device {
                 enabled: 1,
             },
             /// Pacemaker bit for downloading the CRT data
-            field rdy_for_dl 3 RW -> uint as enum rdy_for_dl {
+            field rdy_for_dl 3 -> uint as enum rdy_for_dl {
                 /// Ongoing or not started
                 ongoing: 0,
                 /// Complete
@@ -882,6 +911,7 @@ device Device {
     /// NVM Configuration
     register nvm_conf {
         address: 106,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -897,6 +927,7 @@ device Device {
     /// Serial interface settings
     register if_conf {
         address: 107,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -923,6 +954,7 @@ device Device {
     /// Drive strength control register (NVM backed)
     register drv {
         address: 108,
+        access: RW,
         reset: 170,
         fields: fieldset _ {
             size-bytes: 1,
@@ -940,6 +972,7 @@ device Device {
     /// Settings for the accelerometer self-test configuration and trigger
     register acc_self_test {
         address: 109,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -973,18 +1006,19 @@ device Device {
             size-bytes: 1,
         
             /// STATUS - functional test of detection channels finished
-            field gyr_st_axes_done 0 RW -> bool,
+            field gyr_st_axes_done 0 -> bool,
             /// Status of gyro X-axis self test
-            field gyr_axis_x_ok 1 RW -> bool,
+            field gyr_axis_x_ok 1 -> bool,
             /// Status of gyro Y-axis self test
-            field gyr_axis_y_ok 2 RW -> bool,
+            field gyr_axis_y_ok 2 -> bool,
             /// Status of gyro Z-axis self test
-            field gyr_axis_z_ok 3 RW -> bool,
+            field gyr_axis_z_ok 3 -> bool,
         },
     },
     /// NVM backed configuration bits
     register nv_conf {
         address: 112,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -1021,6 +1055,7 @@ device Device {
     /// Offset compensation for Accelerometer X-axis (NVM backed)
     register offset_0 {
         address: 113,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -1031,6 +1066,7 @@ device Device {
     /// Offset compensation for Accelerometer Y-axis (NVM backed)
     register offset_1 {
         address: 114,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -1041,6 +1077,7 @@ device Device {
     /// Offset compensation for Accelerometer Z-axis (NVM backed)
     register offset_2 {
         address: 115,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -1051,6 +1088,7 @@ device Device {
     /// Offset compensation for Gyroscope X-axis (NVM backed)
     register offset_3 {
         address: 116,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -1061,6 +1099,7 @@ device Device {
     /// Offset compensation for Gyroscope Y-axis (NVM backed)
     register offset_4 {
         address: 117,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -1071,6 +1110,7 @@ device Device {
     /// Offset compensation for Gyroscope Z-axis (NVM backed)
     register offset_5 {
         address: 118,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -1081,6 +1121,7 @@ device Device {
     /// Offset compensation (MSBs gyroscope, enables) (NVM backed)
     register offset_6 {
         address: 119,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -1109,6 +1150,7 @@ device Device {
     /// Power mode configuration register
     register pwr_conf {
         address: 124,
+        access: RW,
         reset: 3,
         fields: fieldset _ {
             size-bytes: 1,
@@ -1124,6 +1166,7 @@ device Device {
     /// Power mode control register
     register pwr_ctrl {
         address: 125,
+        access: RW,
         fields: fieldset _ {
             size-bytes: 1,
         
@@ -1140,11 +1183,12 @@ device Device {
     /// Command register
     register cmd {
         address: 126,
+        access: WO,
         fields: fieldset _ {
             size-bytes: 1,
         
             /// Executes a command
-            field cmd 7:0 RW -> uint as try enum Command {
+            field cmd 7:0 WO -> uint as try enum Command {
                 /// Trigger special gyro operations
                 g_trigger: 2,
                 /// Applies new gyro gain value

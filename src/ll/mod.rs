@@ -1,31 +1,29 @@
+use core::num::NonZeroU8;
+
 #[cfg(test)]
 mod test;
 
 pub mod i2c;
 pub mod spi;
 
-device_driver::create_device!(
-    device_name: Device,
-    manifest: "src/ll/ll.yaml"
+device_driver::compile!(
+    options: "--rust-defmt-feature=defmt",
+    manifest: "src/ll/ll.ddl"
 );
 
-impl Into<usize> for AuxBurstLength {
-    fn into(self) -> usize {
-        aux_burst_length_to_usize(self)
-    }
-}
-
-pub const fn aux_burst_length_to_usize(l: AuxBurstLength) -> usize {
-    match l {
-        AuxBurstLength::Bl1 => 1,
-        AuxBurstLength::Bl2 => 2,
-        AuxBurstLength::Bl6 => 6,
-        AuxBurstLength::Bl8 => 8,
+impl From<AuxBurstLength> for NonZeroU8 {
+    fn from(value: AuxBurstLength) -> Self {
+        match value {
+            AuxBurstLength::Bl1 => Self::new(1).unwrap(),
+            AuxBurstLength::Bl2 => Self::new(2).unwrap(),
+            AuxBurstLength::Bl6 => Self::new(6).unwrap(),
+            AuxBurstLength::Bl8 => Self::new(8).unwrap(),
+        }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "defmt-03", derive(defmt::Format))]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum DeviceError<T> {
     Interface(T),
     BufferTooSmall,

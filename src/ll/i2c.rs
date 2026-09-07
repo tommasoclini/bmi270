@@ -1,4 +1,4 @@
-use device_driver::AsyncRegisterInterface;
+use device_driver::FieldsetMetadata;
 use embedded_hal_async::i2c::I2c;
 
 const MAX_WRITE_SIZE: usize = 513;
@@ -26,16 +26,18 @@ impl<I2C: I2c> DeviceInterface<I2C> {
     }
 }
 
-impl<I2C: I2c> device_driver::AsyncRegisterInterface for DeviceInterface<I2C> {
+impl<I2C: I2c> device_driver::RegisterInterfaceBase for DeviceInterface<I2C> {
     type Error = DeviceError<I2C::Error>;
 
     type AddressType = u8;
+}
 
+impl<I2C: I2c> device_driver::AsyncRegisterInterface for DeviceInterface<I2C> {
     async fn write_register(
         &mut self,
         address: Self::AddressType,
-        _size_bits: u32,
-        data: &[u8],
+        data: &mut [u8],
+        _metadata: &FieldsetMetadata,
     ) -> Result<(), Self::Error> {
         let mut vec = heapless::Vec::<u8, MAX_WRITE_SIZE>::new();
         vec.push(address).map_err(|_| DeviceError::BufferTooSmall)?;
@@ -47,8 +49,8 @@ impl<I2C: I2c> device_driver::AsyncRegisterInterface for DeviceInterface<I2C> {
     async fn read_register(
         &mut self,
         address: Self::AddressType,
-        _size_bits: u32,
         data: &mut [u8],
+        _metadata: &FieldsetMetadata,
     ) -> Result<(), Self::Error> {
         Ok(self
             .i2c
@@ -57,20 +59,23 @@ impl<I2C: I2c> device_driver::AsyncRegisterInterface for DeviceInterface<I2C> {
     }
 }
 
-impl<I2C: I2c> device_driver::BufferInterfaceError for DeviceInterface<I2C> {
+impl<I2C: I2c> device_driver::BufferInterfaceBase for DeviceInterface<I2C> {
     type Error = DeviceError<I2C::Error>;
+    type AddressType = u8;
 }
 
 impl<I2C: I2c> device_driver::AsyncBufferInterface for DeviceInterface<I2C> {
-    type AddressType = u8;
-
     async fn write(
         &mut self,
         address: Self::AddressType,
         buf: &[u8],
     ) -> Result<usize, Self::Error> {
-        self.write_register(address, buf.len() as u32 * 8, buf)
-            .await?;
+        let mut vec = heapless::Vec::<u8, MAX_WRITE_SIZE>::new();
+        vec.push(address).map_err(|_| DeviceError::BufferTooSmall)?;
+        vec.extend_from_slice(buf)
+            .map_err(|_| DeviceError::BufferTooSmall)?;
+
+        self.i2c.write(self.address as u8, &vec).await?;
         Ok(buf.len())
     }
 

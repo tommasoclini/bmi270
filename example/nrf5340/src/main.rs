@@ -13,7 +13,7 @@ use embassy_nrf::{
     peripherals,
     twim::{self, Frequency},
 };
-use embassy_time::{Duration, Timer};
+use embassy_time::Timer;
 use {defmt_rtt as _, panic_probe as _};
 
 bind_interrupts!(struct Irqs {
@@ -46,7 +46,10 @@ async fn main(_spawner: Spawner) {
     config.scl_pullup = true;
     let twim = twim::Twim::new(p.SERIAL0, Irqs, sda, scl, config);
 
-    let mut bmi = ll::Device::new(ll::DeviceInterface::new(twim, ll::Address::Default));
+    let mut bmi = ll::Device::new(ll::i2c::DeviceInterface::new(
+        twim,
+        ll::i2c::Address::Default,
+    ));
     let chip_id = bmi.chip_id().read_async().await.unwrap();
     assert_eq!(chip_id.chip_id(), 0x24);
 
@@ -190,12 +193,6 @@ async fn main(_spawner: Spawner) {
         })
         .await
         .unwrap();
-
-    bmi.read_all_registers_async(|i, name, field_set_value| {
-        defmt::info!("{} {} {}", i, name, field_set_value);
-    })
-    .await
-    .unwrap();
 
     loop {
         let select = embassy_futures::select::select3(

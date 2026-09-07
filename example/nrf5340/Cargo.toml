@@ -5,7 +5,7 @@ version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-bmi270 = { path = "../..", features = ["defmt-03"] }
+bmi270 = { path = "../..", features = ["defmt"] }
 
 embassy-futures = { git = "https://github.com/embassy-rs/embassy.git", rev = "9ff8c70009233d4ea05208e3aa649c5b15512cab" }
 embassy-sync = { git = "https://github.com/embassy-rs/embassy.git", rev = "9ff8c70009233d4ea05208e3aa649c5b15512cab", features = ["defmt"] }

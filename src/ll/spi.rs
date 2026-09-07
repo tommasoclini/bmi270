@@ -1,4 +1,4 @@
-use device_driver::AsyncRegisterInterface;
+use device_driver::FieldsetMetadata;
 use embedded_hal::spi::Operation;
 use embedded_hal_async::spi::SpiDevice;
 
@@ -17,16 +17,18 @@ impl<SPI: SpiDevice> DeviceInterface<SPI> {
     }
 }
 
-impl<SPI: SpiDevice> device_driver::AsyncRegisterInterface for DeviceInterface<SPI> {
+impl<SPI: SpiDevice> device_driver::RegisterInterfaceBase for DeviceInterface<SPI> {
     type Error = DeviceError<SPI::Error>;
 
     type AddressType = u8;
+}
 
+impl<SPI: SpiDevice> device_driver::AsyncRegisterInterface for DeviceInterface<SPI> {
     async fn write_register(
         &mut self,
         address: Self::AddressType,
-        _size_bits: u32,
-        data: &[u8],
+        data: &mut [u8],
+        _metadata: &FieldsetMetadata,
     ) -> Result<(), Self::Error> {
         let preamble = [address];
         let mut operations = [Operation::Write(&preamble), Operation::Write(data)];
@@ -36,8 +38,8 @@ impl<SPI: SpiDevice> device_driver::AsyncRegisterInterface for DeviceInterface<S
     async fn read_register(
         &mut self,
         address: Self::AddressType,
-        _size_bits: u32,
         data: &mut [u8],
+        _metadata: &FieldsetMetadata,
     ) -> Result<(), Self::Error> {
         // Write address with read bit, and dummy byte to give the chip time to fetch the data
         let preamble = [address | 0b1000_0000, 0x00];
@@ -46,20 +48,22 @@ impl<SPI: SpiDevice> device_driver::AsyncRegisterInterface for DeviceInterface<S
     }
 }
 
-impl<SPI: SpiDevice> device_driver::BufferInterfaceError for DeviceInterface<SPI> {
+impl<SPI: SpiDevice> device_driver::BufferInterfaceBase for DeviceInterface<SPI> {
     type Error = DeviceError<SPI::Error>;
+
+    type AddressType = u8;
 }
 
 impl<SPI: SpiDevice> device_driver::AsyncBufferInterface for DeviceInterface<SPI> {
-    type AddressType = u8;
-
     async fn write(
         &mut self,
         address: Self::AddressType,
         buf: &[u8],
     ) -> Result<usize, Self::Error> {
-        self.write_register(address, buf.len() as u32 * 8, buf)
-            .await?;
+        let preamble = [address];
+        let mut operations = [Operation::Write(&preamble), Operation::Write(buf)];
+        self.spi.transaction(&mut operations).await?;
+
         Ok(buf.len())
     }
 

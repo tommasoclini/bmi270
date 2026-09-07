@@ -1,3 +1,3 @@
 fn main() {
-    println!("cargo:rerun-if-changed=src/ll/ll.yaml");
+    println!("cargo:rerun-if-changed=src/ll/ll.ddl");
 }
